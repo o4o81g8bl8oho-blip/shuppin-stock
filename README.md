@@ -33,12 +33,12 @@ icon-512.png        … アプリアイコン（大）
 apple-touch-icon.png … iOSホーム画面用アイコン
 ```
 
-## スマホで使うには（GitHub Pages公開）
+## 公開URL
 
-おこづかい帳と同じ手順です:
+**https://o4o81g8bl8oho-blip.github.io/shuppin-stock/**
 
-1. GitHubで新しいリポジトリを作る（例: `shuppin-stock`、Public）
-2. このフォルダのファイルをアップロード
-3. Settings → Pages → Branch を `main` / `(root)` にして Save
-4. 数分後に `https://<ユーザー名>.github.io/shuppin-stock/` で開ける
-5. iPhoneのSafariで開いて「共有 → ホーム画面に追加」
+iPhoneのSafariで開いて「共有 → ホーム画面に追加」でアプリとして使えます。
+
+## 更新方法
+
+このフォルダのファイルを編集して git push すれば数分で反映されます（Claude Code使用時はStopフックで自動push）。
