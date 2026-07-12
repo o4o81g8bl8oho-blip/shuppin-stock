@@ -274,6 +274,12 @@ function needsRelist(item,threshold){
 }
 function takeDownMarkets(item){return MARKETS.filter(m=>item.listings[m.id].status==='take_down');}
 function soldMarket(item){return MARKETS.find(m=>item.listings[m.id].status==='sold');}
+/* サイト別価格（旧データは item.price を引き継ぐ） */
+function getPrice(item,mid){
+  const l=item.listings[mid];
+  if(l&&l.price!=null&&l.price>0) return l.price;
+  return item.price||0;
+}
 
 /* ============ router ============ */
 const screenEl=document.getElementById('screen');
@@ -340,10 +346,11 @@ async function renderHome(){
         if(l.status==='listed'&&l.listedAt) extra=` ${daysSince(l.listedAt)}日`;
         return `<span class="mkbadge ${st.cls}">${m.dot}${m.short} ${st.label}${extra}</span>`;
       }).join('');
+      const prices=MARKETS.filter(m=>getPrice(it,m.id)>0).map(m=>`${m.short} ${yen(getPrice(it,m.id))}`);
       return `<div class="card item-card" data-item="${it.id}">
         ${tds.length?`<div class="warnbar">⚠️ ${sold?esc(sold.label)+'で売れました！':''}<br>👉 ${tds.map(m=>m.dot+m.label).join('・')} の出品を削除して</div>`:''}
         <div class="t">${esc(it.title)||'（無題）'}</div>
-        ${it.price?`<div class="p">${yen(it.price)}</div>`:''}
+        ${prices.length?`<div class="p">${prices.join('　/　')}</div>`:''}
         <div class="badges">${badges}</div>
         ${relist?`<span class="relist-badge">⏰ そろそろ再出品</span>`:''}
       </div>`;
@@ -372,8 +379,12 @@ async function renderForm(editId){
     <div class="card">
       <label class="f" style="margin-top:0;">🏷️ 商品名</label>
       <input id="f-title" placeholder="例: ユニクロ ダウンジャケット 紺" value="${esc(item?.title||'')}">
-      <label class="f">💰 出品価格 <small>任意</small></label>
-      <input id="f-price" type="number" inputmode="numeric" min="0" placeholder="例: 2400" value="${item?.price||''}">
+      <label class="f">💰 出品価格 <small>任意・サイトごとに設定できます</small></label>
+      ${MARKETS.map(m=>`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="flex:0 0 118px;font-size:.82rem;font-weight:700;">${m.dot} ${m.label}</span>
+        <input id="f-price-${m.id}" type="number" inputmode="numeric" min="0" placeholder="例: 2400" value="${item?getPrice(item,m.id)||'':''}">
+      </div>`).join('')}
       <label class="f">📝 メモ <small>任意</small></label>
       <textarea id="f-memo" rows="3" placeholder="例: 押入れの左の箱に保管">${esc(item?.memo||'')}</textarea>
     </div>
@@ -384,12 +395,15 @@ async function renderForm(editId){
     const title=document.getElementById('f-title').value.trim();
     if(!title){toast('商品名を入力してください');return;}
     const now=todayISO();
+    const listings=item?item.listings:newListings();
+    MARKETS.forEach(m=>{
+      listings[m.id].price=Number(document.getElementById('f-price-'+m.id).value)||0;
+    });
     const data={
       id:item?item.id:uid(),
       title,
-      price:Number(document.getElementById('f-price').value)||0,
       memo:document.getElementById('f-memo').value.trim(),
-      listings:item?item.listings:newListings(),
+      listings,
       createdAt:item?item.createdAt:now,
       updatedAt:now,
     };
@@ -417,14 +431,17 @@ async function renderDetail(id){
   const mkRows=MARKETS.map(m=>{
     const l=item.listings[m.id];
     const st=STATUS[l.status];
+    const price=getPrice(item,m.id);
     let info='';
     if(l.status==='listed'&&l.listedAt){
       const d=daysSince(l.listedAt);
-      info=`${mdLabel(l.listedAt)}に出品 → ${d}日経過${d>=threshold?'　⏰そろそろ再出品':''}`;
+      info=`${price?yen(price)+'で':''}${mdLabel(l.listedAt)}から出品中 → ${d}日経過${d>=threshold?'　⏰そろそろ再出品':''}`;
     }else if(l.status==='sold'&&l.soldAt){
-      info=`${mdLabel(l.soldAt)}に売れました🎉`;
+      info=`${mdLabel(l.soldAt)}に${price?yen(price)+'で':''}売れました🎉`;
     }else if(l.status==='take_down'){
       info='ほかのサイトで売れたので、このサイトの出品を削除してください';
+    }else if(price){
+      info=`出品予定価格: ${yen(price)}`;
     }
     let acts='';
     if(l.status==='not_listed'){
@@ -457,7 +474,6 @@ async function renderDetail(id){
     </div>
     <div class="card">
       <div class="sect-title">ℹ️ メモ</div>
-      ${item.price?`<div style="font-size:.9rem;font-weight:700;">出品価格: ${yen(item.price)}</div>`:''}
       <div class="memo-view">${esc(item.memo)||'（メモなし）'}</div>
     </div>
     <button class="btn sub" style="width:100%;" onclick="location.hash='#/edit/${item.id}'">✏️ 編集する</button>
