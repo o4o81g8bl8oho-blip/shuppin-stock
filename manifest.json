@@ -1,7 +1,7 @@
 {
-  "name": "出品ストック",
-  "short_name": "出品ストック",
-  "description": "フリマ3サイトの出品下書きストック＆再出品管理",
+  "name": "出品管理",
+  "short_name": "出品管理",
+  "description": "メルカリ・PayPayフリマ・ラクマ、どこに何を出品中かを管理",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

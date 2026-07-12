@@ -1,6 +1,6 @@
-// 出品ストック Service Worker
+// 出品管理 Service Worker
 // HTMLはネットワーク優先（更新がすぐ反映される）、その他はキャッシュ優先
-const CACHE = 'shuppin-stock-v1';
+const CACHE = 'shuppin-stock-v2';
 const PRECACHE = [
   './',
   './index.html',
